@@ -5,14 +5,16 @@ public class DefaultApiAuthenticator implements ApiAuthenticator {
 
     private CredentialStorage credentialStorage;
 
-    @Override
+    public DefaultApiAuthenticator(CredentialStorage credentialStorage) {
+        this.credentialStorage = credentialStorage;
+    }
+
     public void auth(String url) {
         // 基于url构建apiRequest对象
         ApiRequest apiRequest = ApiRequest.createFromFullUrl(url);
         this.auth(apiRequest);
     }
 
-    @Override
     public void auth(ApiRequest apiRequest) {
         // 基于apiRequest构建出用户请求对应的authToken出来
         AuthToken authToken = AuthToken.create(apiRequest.getBaseUrl(), apiRequest.getTimestamp());
