@@ -50,7 +50,14 @@
       }
   }
   
+  
+  // 使用方式
+  // 使用URL获取适配器
+  HandlerAdapter handlerAdapter = handlerMapping.get(URL);
+  // 调用适配器的handler方法即可，就没有烦人的if-else代码了
+  handlerAdapter.handler();
+  
   ```
-
+  
   
 
