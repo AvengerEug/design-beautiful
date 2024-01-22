@@ -59,5 +59,55 @@
   
   ```
   
-  
+
+## 策略模式
+
+在Spring AOP中有两种实现动态代理的方式，分别是jdk的proxy和cglib。**在策略模式中，策略的创建一般是通过工厂方法来实现的**。对应spring的源码中，AopProxyFactory是一个工厂类接口，DefaultAopProxyFactory是一个默认的工厂类，用来创建AopProxy对象。代码如下所示：
+
+```java
+// 策略类的定义
+public interface AopProxy {
+  Object getProxy();
+  Object getProxy(ClassLoader var1);
+}
+
+
+// 创建策略类的工厂定义
+public Interface AopProxyFactory {
+    AopProxy createAopProxy(AdviseSupport var1) throws AopConfigException;
+}
+
+// aop代理类的创建工厂
+public class DefaultAopProxyFactory implements AopProxyFactory {
+    public DefaultAopProxyFactory() {
+    }
+    
+    public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {
+        // 创建jdk模式的AopProxy
+        if (!config.isOptimize() && !config.isProxyTargetClass() && !this.hasNoUserSuppliedProxyInterfaces(config)) {
+          return new JdkDynamicAopProxy(config);
+        } else {
+          Class<?> targetClass = config.getTargetClass();
+          if (targetClass == null) {
+            throw new AopConfigException("TargetSource cannot determine target class: Either an interface or a target is required for proxy creation.");
+          } else {
+            // 有cglib，再根据类是否实现接口来确定是使用cglib还是jdk代理类
+            return (AopProxy)(!targetClass.isInterface() && !Proxy.isProxyClass(targetClass) ? new ObjenesisCglibAopProxy(config) : new JdkDynamicAopProxy(config));
+          }
+        }
+      }
+	}
+
+  //用来判断用哪个动态代理实现方式
+  private boolean hasNoUserSuppliedProxyInterfaces(AdvisedSupport config) {
+    Class<?>[] ifcs = config.getProxiedInterfaces();
+  }
+   
+    
+}
+
+
+```
+
+* 策略模式的典型应用场景，一般是通过环境变量、状态值、计算结果等动态地决定使用哪个策略。对应到Spring的源码中，我们可以参看刚刚给出的DefaultAopProxyFactory类中的createAopProxy函数的代码实现，其中hasNoUserSuppliedProxyInterfaces方法和其他的一些判断条件决定是使用哪种策略生成代理类
 
