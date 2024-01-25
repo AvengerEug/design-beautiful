@@ -111,3 +111,85 @@ public class DefaultAopProxyFactory implements AopProxyFactory {
 
 * 策略模式的典型应用场景，一般是通过环境变量、状态值、计算结果等动态地决定使用哪个策略。对应到Spring的源码中，我们可以参看刚刚给出的DefaultAopProxyFactory类中的createAopProxy函数的代码实现，其中hasNoUserSuppliedProxyInterfaces方法和其他的一些判断条件决定是使用哪种策略生成代理类
 
+## 组合模式
+
+* 组合模式主要是能应用到树形结构的一组数据上，树中的数据分为叶子和中心节点两类。以spring的CacheManager接口为例，实现它的有EhCacheManager、SimpleCacheManager、RedisCacheManager、CompositeCacheManager。其中CompositeCacheManager表示中间节点，其余的表示叶子节点。代码如下所示：
+
+  ```java
+  // CacheManager接口定义，提供两个行为：根据名字获取缓存对象和获取u所有的缓存管理器
+  public interface CacheManager {
+    // 根据名字获取缓存对象
+    Cache getCache(String var1);
+    // 获取所有的缓存管理器
+    Collection<String> getCacheNames();
+  }
+  
+  // 缓存管理器，管理的是所有的CacheManager对象
+  public class CompositeCacheManager implements CacheManager, InitializingBean {
+    // 管理的CacheManager对象集合
+    private final List<CacheManager> cacheManagers = new ArrayList();
+    private boolean fallbackToNoOpCache = false;
+  
+    public CompositeCacheManager() {
+    }
+  
+    public CompositeCacheManager(CacheManager... cacheManagers) {
+      this.setCacheManagers(Arrays.asList(cacheManagers));
+    }
+  
+    // 注册cacheManager对象
+    public void setCacheManagers(Collection<CacheManager> cacheManagers) {
+      this.cacheManagers.addAll(cacheManagers);
+    }
+  
+    public void setFallbackToNoOpCache(boolean fallbackToNoOpCache) {
+      this.fallbackToNoOpCache = fallbackToNoOpCache;
+    }
+  
+    public void afterPropertiesSet() {
+      if (this.fallbackToNoOpCache) {
+        this.cacheManagers.add(new NoOpCacheManager());
+      }
+  
+    }
+  
+    /**
+     * 根据名字，从所有的缓存管理器中获取一遍对应的缓存。
+     * 用到了递归。这里也可以用for，效果是一样的。
+     */
+    @Override
+    public Cache getCache(String name) {
+      Iterator var2 = this.cacheManagers.iterator();
+  
+      Cache cache;
+      do {
+        if (!var2.hasNext()) {
+          return null;
+        }
+  
+        CacheManager cacheManager = (CacheManager)var2.next();
+        cache = cacheManager.getCache(name);
+      } while(cache == null);
+  
+      return cache;
+    }
+  
+    @Override
+    public Collection<String> getCacheNames() {
+      Set<String> names = new LinkedHashSet();
+      Iterator var2 = this.cacheManagers.iterator();
+  
+      while(var2.hasNext()) {
+        CacheManager manager = (CacheManager)var2.next();
+        names.addAll(manager.getCacheNames());
+      }
+  
+      return Collections.unmodifiableSet(names);
+    }
+  }
+  ```
+
+  
+
+
+
