@@ -198,6 +198,7 @@ public class DefaultAopProxyFactory implements AopProxyFactory {
 * 为了实现这样的功能，spring中使用了装饰器的设计模式，TransactionAwareCacheDecorator增加了对事务的支持，在事务提交、回滚的时候分别对cache的数据做处理。TransactionAwareCacheDecorator实现了cache接口，并且将所有的操作都委托给targetCache实现，对其中的写操作添加了事务功能。代码如下所示：
 
   ```java
+  // 装饰器 与 内部增强的对象，都实现了同一个cache接口，符合装饰器设计模式的使用场景
   public class TransactionAwareCacheDecorator implements Cache {
     private final Cache targetCache;
   
