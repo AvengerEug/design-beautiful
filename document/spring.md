@@ -191,5 +191,98 @@ public class DefaultAopProxyFactory implements AopProxyFactory {
 
   
 
+## 装饰器模式
 
+* 在使用缓存的场景中，一般都是配合数据库来使用的。如果写缓存成功，但数据库事务回滚了，那缓存中就会有脏数据。为了解决这个问题，我们需要将缓存的操作与数据库的操作放在同一个事务中，要么都成功，要么都失败。
+
+* 为了实现这样的功能，spring中使用了装饰器的设计模式，TransactionAwareCacheDecorator增加了对事务的支持，在事务提交、回滚的时候分别对cache的数据做处理。TransactionAwareCacheDecorator实现了cache接口，并且将所有的操作都委托给targetCache实现，对其中的写操作添加了事务功能。代码如下所示：
+
+  ```java
+  public class TransactionAwareCacheDecorator implements Cache {
+    private final Cache targetCache;
+  
+    public TransactionAwareCacheDecorator(Cache targetCache) {
+      Assert.notNull(targetCache, "Target Cache must not be null");
+      this.targetCache = targetCache;
+    }
+  
+    public Cache getTargetCache() {
+      return this.targetCache;
+    }
+  
+    public String getName() {
+      return this.targetCache.getName();
+    }
+  
+    public Object getNativeCache() {
+      return this.targetCache.getNativeCache();
+    }
+  
+    public ValueWrapper get(Object key) {
+      return this.targetCache.get(key);
+    }
+  
+    public <T> T get(Object key, Class<T> type) {
+      return this.targetCache.get(key, type);
+    }
+  
+    public <T> T get(Object key, Callable<T> valueLoader) {
+      return this.targetCache.get(key, valueLoader);
+    }
+  
+    /**
+     * 我们一般是操作数据库，然后put缓存。
+     * 但是这里的put方法会先检测当前是否有事务操作，如果有，则注册一个回调函数，在事务提交后，会执行afterCommit方法，即put数据到缓存中
+     * 
+     */
+    public void put(final Object key, final Object value) {
+      if (TransactionSynchronizationManager.isSynchronizationActive()) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+          public void afterCommit() {
+            TransactionAwareCacheDecorator.this.targetCache.put(key, value);
+          }
+        });
+      } else {
+        this.targetCache.put(key, value);
+      }
+    }
+    
+    public ValueWrapper putIfAbsent(Object key, Object value) {
+      return this.targetCache.putIfAbsent(key, value);
+    }
+  
+    /**
+     * 移除缓存数据。一般是删除数据库时，要移除数据。
+     * 但是这里的移除数据方法会先检测当前是否有事务操作，如果有，则注册一个回调函数，在事务提交后，会执行afterCommit方法，即从缓存中移除数据
+     */
+    public void evict(final Object key) {
+      if (TransactionSynchronizationManager.isSynchronizationActive()) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+          public void afterCommit() {
+            TransactionAwareCacheDecorator.this.targetCache.evict(key);
+          }
+        });
+      } else {
+        this.targetCache.evict(key);
+      }
+  
+    }
+  
+    public void clear() {
+      if (TransactionSynchronizationManager.isSynchronizationActive()) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+          public void afterCommit() {
+            TransactionAwareCacheDecorator.this.targetCache.clear();
+          }
+        });
+      } else {
+        this.targetCache.clear();
+      }
+    }
+  }
+  ```
+
+* 额外思考：为什么要用装饰器模式来实现这个功能？我们直接根据操作数据库方法返回值来判断，数据库操作是否成功，进而再做相关的处理。
+
+  * 如果要这么实现的话，代码肯定是不够优雅的，后续不好维护和迭代。通知，我们还得感知到spring事务的钩子函数，提交事务后，再返回true，回滚事务时，则返回false。但是我们既然都感知到spring事务的钩子函数了，那为什么不直接在钩子函数里操作缓存呢？
 
