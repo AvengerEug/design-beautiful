@@ -289,7 +289,7 @@ public class DefaultAopProxyFactory implements AopProxyFactory {
 
 ## 工厂模式
 
-* 比较经典的就是IOC容器了，核心就是将复杂的创建过程封装到工厂中，并且会创建出同类型或不同类型的对象。这里也要跟建造者设计模式区分开，建造者是设计模式主要的功能是创建同一个类型的对象（每个对象内部的属性可能会不一样。）
+* 比较经典的就是IOC容器了，核心就是将复杂的创建过程封装到工厂中，并且会根据不同的类别(eg: getByClass方法), 创建出对应子类的对象。这里也要跟建造者设计模式区分开，建造者是设计模式主要的功能是创建同一个类型的对象（没有子类的概念，每个对象内部的属性可能会不一样。）
 
 ## 模版模式
 
@@ -309,4 +309,5 @@ public class DefaultAopProxyFactory implements AopProxyFactory {
 
 ## 责任链模式
 
-* 在web开发中，spring的安全框架，就用到了servlet的filter链。
+* 在web开发中，spring的安全框架，就用到了servlet的filter链（**会将下一个filter传递到当前filter中，只有当前pipe手动调用下一个pipe的对应方法时，才会执行对应的逻辑**）。
+* spring mvc的interceptor用的是pipeline（for循环挨个执行）的思想，
