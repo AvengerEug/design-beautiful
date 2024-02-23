@@ -19,16 +19,21 @@ public class CapMario implements IMario {
     }
 
     public void obtainMushRoom() {
-        // 变成超级马里奥
+        // do nothing
     }
 
     public void obtainCape() {
+        // do nothing
     }
 
     public void obtainFireFlower() {
+        // do nothing
     }
 
     public void meetMonster() {
-        // do nothing
+        // 遇到怪物，变成小马里奥
+        marioStateMachine.setMarioState(new SmallMario(marioStateMachine));
+        // 扣100积分
+        marioStateMachine.setScore(marioStateMachine.getScore() - 200);
     }
 }

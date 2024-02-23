@@ -1,7 +1,5 @@
 package com.eugene.sumarry.designbeautiful.mario.mario3;
 
-import com.eugene.sumarry.designbeautiful.mario.MarioState;
-
 /**
  * 马里奥的状态机
  * @author muyang
@@ -19,6 +17,11 @@ public class MarioStateMachine {
      */
     private Integer score;
 
+    public MarioStateMachine() {
+        this.score = 0;
+        this.marioState = new SmallMario(this);
+    }
+
     public IMario getMarioState() {
         return marioState;
     }
@@ -34,4 +37,14 @@ public class MarioStateMachine {
     public void setScore(Integer score) {
         this.score = score;
     }
+
+    @Override
+    public String toString() {
+        return "MarioStateMachine{" +
+                "marioState=" + marioState +
+                ", score=" + score +
+                '}';
+    }
+
+
 }

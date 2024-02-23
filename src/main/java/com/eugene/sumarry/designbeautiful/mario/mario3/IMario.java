@@ -3,7 +3,8 @@ package com.eugene.sumarry.designbeautiful.mario.mario3;
 import com.eugene.sumarry.designbeautiful.mario.MarioState;
 
 /**
- * 马里奥的事件接口
+ * 定义马里奥相关的事件接口。
+ * 每个事件对应的action，在实现IMario接口的马里奥类下
  * @author muyang
  * @create 2024/2/22 20:02
  */
